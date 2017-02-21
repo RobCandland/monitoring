@@ -214,11 +214,11 @@ def zeneventmod(ackorclose, evid):
         return False
 
 if __name__ == '__main__':
-    description = "Query PagerDuty v2 API to get Log_Entries for alerts ack'd or resolved"
-    description += "via PagerDuty and will modify associated events in Zenoss 4.2.5 by"
-    description += "ack-ing or closing via Zenoss API after entering a log.  Running with -m 1"
-    description += "will query PagerDuty logs between now and one minute previous."
-    description += "Note that this works only with PagerDuty Zenpack installed."
+    description = "Query PagerDuty v2 API to get Log_Entries for alerts ack'd or resolved "
+    description += "via PagerDuty and modify associated events in Zenoss 4.2.5 by "
+    description += "ack-ing or closing via Zenoss API after entering a log.  Running with -m 1 "
+    description += "will query PagerDuty logs between now and one minute previous. "
+    description += "Note that this works only with PagerDuty Zenpack installed. "
     description += "Intended to be run via cron once a minute."
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-v", "--verbose", action="count",
@@ -233,14 +233,14 @@ if __name__ == '__main__':
                         help="Zenoss user that can manage events")
     parser.add_argument("-p", "--zenpass", default="passw0rd",
                         help="Zenoss password")
-    parser.add_argument("-a", "--apikeypd", default="GET_FROM_PAGERDUTY",
+    parser.add_argument("-a", "--apikeypd", default="CHANGE_ME-GET_FROM_PAGERDUTY",
                         help="PagerDuty API Key")
     parser.add_argument("-o", "--onlyjson", action="store_true",
                         help="Output JSON only and exit")
     parser.add_argument("-t", "--test", action="store_true",
-                        help="Test, retrive from PD, log in event in Zenoss only")
+                        help="Test, retrieve from PD, log to event in Zenoss only")
     parser.add_argument("-n", "--nologtest", action="store_true",
-                        help="Test, retrive from PD, do nothing in Zenoss, use with -v")
+                        help="Test, retrieve from PD, no change to Zenoss, use with -v")
     parser.add_argument("-s", "--pdservice", default="CHANGE_ME_TO_PD_SERVICE_NAME",
                         help="PagerDuty Service name")
     options = parser.parse_args()
