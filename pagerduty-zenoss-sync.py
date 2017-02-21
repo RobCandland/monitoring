@@ -104,7 +104,7 @@ def parse_log_entries(log_entries, counter):
                               u"Changing state of this alert to {0} as PagerDuty reports"
                               u" '{1} via {2} at {3}'. ({4})")
                               .format(incaction, incmodby, incmodvia, incmodtime, __file__))
-                    log.info("Incident text (inctext) is ->{0}-<".format(inctext))
+                    log.info("Incident text (inctext) is ->{0}<-".format(inctext))
                     # Finally log then close/ack Zenoss event
                     if options.test:
                         log.info("Test mode activated, only logging in event in Zenoss, not")
@@ -230,7 +230,7 @@ if __name__ == '__main__':
                         help="Zenoss user that can manage events")
     parser.add_argument("-p", "--zenpass", default="passw0rd",
                         help="Zenoss password")
-    parser.add_argument("-a", "--apikeypd", default="get from PagerDuty",
+    parser.add_argument("-a", "--apikeypd", default="GET_FROM_PAGERDUTY",
                         help="PagerDuty API Key")
     parser.add_argument("-o", "--onlyjson", action="store_true",
                         help="Output JSON only and exit")
