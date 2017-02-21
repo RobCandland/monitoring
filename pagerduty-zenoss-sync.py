@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Not python 3 compliant probably.
+# Most likely not python 3 compatible
 # Be sure to modify parser.add_argument entries in main
 # or supply Zenoss credentials/PD info via parameters
 
@@ -121,21 +121,23 @@ def parse_log_entries(log_entries, counter):
                         zeneventlog(incaction, inczenkey, inctext)
                         zeneventmod(incaction, inczenkey)
                 else:
-                    log.info("Skipping index {0} of log_entries - 'through the API'".format(index))
+                    log.info("Skipped index {0} of log_entries, as".format(index))
+                    log.info("PagerDuty API was used.")
                     log.debug("<--------------------------------------->")
-                    log.debug("This indexed {0} snippet of JSON is:".format(index))
+                    log.debug("This index {0} snippet of JSON is:".format(index))
                     log.debug(log_entries[index])
                     log.debug("<--------------------------------------->")
             else:
-                log.info("Skipping index {0} of log_entries - not ack/close".format(index))
+                log.info("Skipped index {0} of log_entries, not ack/resolve".format(index))
                 log.debug("<--------------------------------------->")
-                log.debug("This indexed {0} snippet of JSON is:".format(index))
+                log.debug("This index {0} snippet of JSON is:".format(index))
                 log.debug(log_entries[index])
                 log.debug("<--------------------------------------->")
         else:
-            log.info("Skipping index {0} of log_entries - not 'Zenoss 4'".format(index))
+            log.info("Skipped index {0} of log_entries".format(index))
+            log.info("as PagerDuty service is not {0}".format(options.pdservice))
             log.debug("<--------------------------------------->")
-            log.debug("This indexed {0} snippet of JSON is:".format(index))
+            log.debug("This index {0} snippet of JSON is:".format(index))
             log.debug(log_entries[index])
             log.debug("<--------------------------------------->")
 
@@ -216,6 +218,7 @@ if __name__ == '__main__':
     description += "via PagerDuty and will modify associated events in Zenoss 4.2.5 by"
     description += "ack-ing or closing via Zenoss API after entering a log.  Running with -m 1"
     description += "will query PagerDuty logs between now and one minute previous."
+    description += "Note that this works only with PagerDuty Zenpack installed."
     description += "Intended to be run via cron once a minute."
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-v", "--verbose", action="count",
