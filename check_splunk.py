@@ -19,7 +19,7 @@ def argparse():
     parser.add_argument("-e", "--errormsg", dest="errormsg", type=str,
                         help="Required, error message output for Nagios/Zenoss", required=True)
     parser.add_argument("-n", "--NoSSL", dest="NoSSL", action="store_true",
-                        help="Optional, don't use SSL", default=True)
+                        help="Optional, don't use SSL")
     options = parser.parse_args()
     return options
 
@@ -171,9 +171,9 @@ if __name__ == '__main__':
 
     # Define some URL's
     if options.NoSSL:
-        base_url = 'https://' + options.host + ':' + str(options.port)
-    else:
         base_url = 'http://' + options.host + ':' + str(options.port)
+    else:
+        base_url = 'https://' + options.host + ':' + str(options.port)
     auth_url = base_url + '/services/auth/login'
     search_url = base_url + '/services/search/jobs'
 
