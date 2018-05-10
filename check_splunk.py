@@ -9,7 +9,9 @@ def argparse():
                         help="Splunk host", default="splunk.domain.com")
     parser.add_argument("-P", "--port", dest="port", type=int,
                         help="Optional port for Splunk host", default=8089)
-    parser.add_argument("-v", "--verbose", action="store_true", help="Output verbose messages")
+    parser.add_argument("-v", "--verbose", action="count",
+                        help="Output verbose messages, -vv increases verbosity",
+                        default=0)
     parser.add_argument("-u", "--user", dest="user", type=str, help="Optional, splunk user",
                         default="user@domain.com")
     parser.add_argument("-p", "--passwd", dest="passwd", type=str,
