@@ -58,7 +58,7 @@ def splunkgetsessionkey(options, auth_url):
         sys.exit(1)
     try:
         sessionkey = authjson['sessionKey']
-        log.info("Verified we got sessionkey in JSON output\n")
+        log.info("Verified we got sessionkey in JSON output")
     except:
         print("WARNING - Could not retrieve sessionKey JSON value from {0}|".format(r.json))
         sys.exit(1)
@@ -92,7 +92,7 @@ def splunkcreatesearch(search_url, search_query, sessionkey):
         sys.exit(1)
     try:
         sid = searchjson['sid']
-        log.info("Verified we got sid variable in JSON output\n".format(sid))
+        log.info("Verified we got sid variable in JSON output".format(sid))
     except:
         print("WARNING - Could not retrieve sessionKey JSON value from {0}|".format(r.json))
         sys.exit(1)
@@ -138,7 +138,7 @@ def splunkretrieveresults(results_url, sessionkey):
     import requests
     import sys
     # Retrieve search results
-    log.info("\nTrying {0} for search results".format(results_url))
+    log.info("Trying {0} for search results".format(results_url))
     try:
         results = requests.get(results_url,
                                headers={'Authorization': 'Splunk {0}'.format(sessionkey)},
@@ -161,13 +161,13 @@ if __name__ == '__main__':
     import logging as log
     options = argparse()
     log = deflog(options)
-    log.info("\nStarting Splunk search to {0}:{1} with user {2}"
+    log.info("Starting Splunk search to {0}:{1} with user {2}"
              .format(options.host, options.port, options.user))
 
     # Make sure search query starts with search
     if not options.search.startswith('search'):
         search_query = 'search ' + options.search
-    log.info("search_query is ->{0}<-\n".format(search_query))
+    log.info("search_query is ->{0}<-".format(search_query))
 
     # Define some URL's
     if options.NoSSL:
@@ -205,14 +205,14 @@ if __name__ == '__main__':
             numberofresults += 1
 
     if numberofresults > 0:
-        log.info("Got {0} results, last _raw key value of results JSON is:\n"
+        log.info("Got {0} results, last _raw key value of results JSON is:"
                  .format(numberofresults))
-        log.info("{0}\nEnd of _raw key value\n".format(value))
+        log.info("{0}End of _raw key value".format(value))
         print("CRITICAL - {0}, error count is {1}|resultsfound={1};;;0"
               .format(options.errormsg, numberofresults))
         sys.exit(2)
     else:
-        log.info("Retrieved results, zero found\n")
+        log.info("Retrieved results, zero found")
         print("OK - zero results from search|resultsfound=0;;;0")
         sys.exit(0)
     # EOF
