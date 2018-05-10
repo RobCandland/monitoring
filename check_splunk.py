@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 # Nagios style monitoring check that will submit a search job to Splunk and count results
+# Example to search for "Error sending HTTP request" and alert for more than 5 results:
+# ./check_splunk.py -u splunkuser -p splunkpass\
+#  -s 'index="asdf" host="*asdf*" earliest=-10m latest=-5m "Error sending HTTP request"'\
+#  -e 'HTTP request error detected in Splunk for asdf' -H splunk.domain.com -t 5
+# Requires requests module
 
 
 def argparse():
@@ -13,14 +18,17 @@ def argparse():
                         help="Output verbose messages, -vv increases verbosity",
                         default=0)
     parser.add_argument("-u", "--user", dest="user", type=str, help="Optional, splunk user",
-                        default="user@domain.com")
+                        default="splunkuser@domain.com")
     parser.add_argument("-p", "--passwd", dest="passwd", type=str,
                         help="Optional, splunk user password", default="splunkpass")
     parser.add_argument("-s", "--search", dest="search", type=str,
                         help="Required, splunk search query string", required=True)
     parser.add_argument("-e", "--errormsg", dest="errormsg", type=str,
                         help="Required, error message output for Nagios/Zenoss", required=True)
-    parser.add_argument("-n", "--NoSSL", dest="NoSSL", action="store_true",
+    parser.add_argument("-t", "--threshold", dest="threshold", type=int,
+                        help="Threshold of number of results on which to alert, default is 0",
+                        default=0)
+    parser.add_argument("-n", "--nossl", dest="nossl", action="store_true",
                         help="Optional, don't use SSL")
     options = parser.parse_args()
     return options
@@ -38,8 +46,12 @@ def deflog(options):
 
 def splunkgetsessionkey(options, auth_url):
     import requests
+    try:
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    except:
+        pass
     import sys
-    log.info("Trying {0} to authenticate to Splunk".format(auth_url))
+    log.info("Trying {0} to authenticate to Splunk API".format(auth_url))
     try:
         r = requests.post(auth_url,
                           data={'username': options.user,
@@ -54,7 +66,7 @@ def splunkgetsessionkey(options, auth_url):
     try:
         authjson = r.json()
         # JSON returned (if successfull) is like the following
-        # {"sessionKey":"pn1^MWBRnKasdfksucMGnT5ryjNnzPasdflnlots_more_text
+        # {"sessionKey":"pn1^MWBRnKasdfksucMGnT5ryjNnzPasdflnlots_more_text"}
     except:
         print("WARNING - Could not retrieve JSON from {0}|".format(auth_url))
         sys.exit(1)
@@ -62,20 +74,21 @@ def splunkgetsessionkey(options, auth_url):
         sessionkey = authjson['sessionKey']
         log.info("Verified we got sessionkey in JSON output")
     except:
-        print("WARNING - Could not retrieve sessionKey JSON value from {0}|".format(r.json))
+        print("WARNING - Could not retrieve sessionKey JSON value from {0}|".format(auth_url))
         sys.exit(1)
     return authjson
 
 
 def splunkcreatesearch(search_url, search_query, sessionkey):
     import requests
+    try:
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    except:
+        pass
     import sys
-    # Example search query you can pass with -s and use with a 5 minute interval check:
-    # 'index="asdf" host="*asdf*" earliest="-10m" latest="-5m" "Error sending HTTP request"'
-    # ^^^ Check from 10 minutes to 5 minutes ago to allow Splunk to finish ingesting
 
     # Create search job
-    log.info("Trying {0} to create Splunk search".format(search_url))
+    log.info("Trying {0} to create Splunk search in API".format(search_url))
     try:
         s = requests.post(search_url,
                           headers={'Authorization': 'Splunk {0}'.format(sessionkey)},
@@ -88,13 +101,13 @@ def splunkcreatesearch(search_url, search_query, sessionkey):
     try:
         searchjson = s.json()
         # JSON returned if successfull is like:
-        # {"sid":"1473888470.1553447"}
+        # {"sid":"1999888470.1553447"}
     except:
         print("WARNING - Could not retrieve JSON from {0}|".format(search_url))
         sys.exit(1)
     try:
         sid = searchjson['sid']
-        log.info("Verified we got sid variable in JSON output".format(sid))
+        log.info("Verified we got sid value in JSON output: {0}".format(sid))
     except:
         print("WARNING - Could not retrieve sessionKey JSON value from {0}|".format(r.json))
         sys.exit(1)
@@ -103,6 +116,10 @@ def splunkcreatesearch(search_url, search_query, sessionkey):
 
 def splunkcheckjobloop(status_url, sessionkey):
     import requests
+    try:
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    except:
+        pass
     import time
     import sys
     # Set variables and run while loop that checks job status
@@ -138,9 +155,13 @@ def splunkcheckjobloop(status_url, sessionkey):
 
 def splunkretrieveresults(results_url, sessionkey):
     import requests
+    try:
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    except:
+        pass
     import sys
     # Retrieve search results
-    log.info("Trying {0} for search results".format(results_url))
+    log.info("Trying {0} for search results via Splunk API".format(results_url))
     try:
         results = requests.get(results_url,
                                headers={'Authorization': 'Splunk {0}'.format(sessionkey)},
@@ -163,7 +184,7 @@ if __name__ == '__main__':
     import logging as log
     options = argparse()
     log = deflog(options)
-    log.info("Starting Splunk search to {0}:{1} with user {2}"
+    log.info("Starting Splunk API search to {0}:{1} with user {2}"
              .format(options.host, options.port, options.user))
 
     # Make sure search query starts with search
@@ -172,7 +193,7 @@ if __name__ == '__main__':
     log.info("search_query is ->{0}<-".format(search_query))
 
     # Define some URL's
-    if options.NoSSL:
+    if options.nossl:
         base_url = 'http://' + options.host + ':' + str(options.port)
     else:
         base_url = 'https://' + options.host + ':' + str(options.port)
@@ -191,13 +212,15 @@ if __name__ == '__main__':
     status_url = base_url + '/services/search/jobs/' + sid + '/'
     log.info("Trying {0} for status of Splunk job".format(status_url))
     statusjson = splunkcheckjobloop(status_url, sessionkey)
-    log.info("Success getting status, statusjson is {0}".format(statusjson))
+    log.info("Success getting status")
+    log.debug("statusjson is {0}".format(statusjson))
 
     # Step 4, retrieve results
     # Construct results_url with sid in path
     results_url = base_url + '/services/search/jobs/' + sid + '/results'
     resultsjson = splunkretrieveresults(results_url, sessionkey)
-    log.info("Success getting results, resultsjson is {0}".format(resultsjson))
+    log.info("Success getting results from Splunk API")
+    log.debug("resultsjson is {0}".format(resultsjson))
 
     # Count number of results, print Nagios style output and exit
     numberofresults = 0
@@ -206,7 +229,7 @@ if __name__ == '__main__':
             value = key['_raw']
             numberofresults += 1
 
-    if numberofresults > 0:
+    if numberofresults > options.threshold:
         log.info("Got {0} results, last _raw key value of results JSON is:"
                  .format(numberofresults))
         log.info("{0}End of _raw key value".format(value))
@@ -217,4 +240,3 @@ if __name__ == '__main__':
         log.info("Retrieved results, zero found")
         print("OK - zero results from search|resultsfound=0;;;0")
         sys.exit(0)
-    # EOF
