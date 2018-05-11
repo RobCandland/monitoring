@@ -227,14 +227,15 @@ if __name__ == '__main__':
     # Count number of results, print Nagios style output and exit
     numberofresults = 0
     for key in resultsjson['results']:
-        if key['_raw']:
+        try:
             value = key['_raw']
             numberofresults += 1
+            log.info("{0}End of _raw key value".format(value))
+        except:
+            pass
 
     if numberofresults > options.threshold:
-        log.info("Got {0} results, last _raw key value of results JSON is:"
-                 .format(numberofresults))
-        log.info("{0}End of _raw key value".format(value))
+        log.info("Got {0} results".format(numberofresults))
         print("CRITICAL - {0}, error count is {1}|resultsfound={1};;;0"
               .format(options.errormsg, numberofresults))
         sys.exit(2)
