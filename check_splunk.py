@@ -190,6 +190,8 @@ if __name__ == '__main__':
     # Make sure search query starts with search
     if not options.search.startswith('search'):
         search_query = 'search ' + options.search
+    else:
+        search_query = options.search
     log.info("search_query is ->{0}<-".format(search_query))
 
     # Define some URL's
