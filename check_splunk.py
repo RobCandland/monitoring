@@ -4,11 +4,13 @@
 # ./check_splunk.py -u splunkuser -p splunkpass\
 #  -s 'index="asdf" host="*asdf*" earliest=-10m latest=-5m "Error sending HTTP request"'\
 #  -e 'HTTP request error detected in Splunk for asdf' -H splunk.domain.com -t 5
+# Note that this check expects that you are looking for errors not the lack thereof.
 # Requires requests module
 
 
-def argparse():
+def argslog():
     import argparse
+    import logging as log
     parser = argparse.ArgumentParser(description="Search splunk")
     parser.add_argument("-H", "--host", dest="host", type=str,
                         help="Splunk host", default="splunk.domain.com")
@@ -31,26 +33,21 @@ def argparse():
     parser.add_argument("-n", "--nossl", dest="nossl", action="store_true",
                         help="Optional, don't use SSL")
     options = parser.parse_args()
-    return options
-
-
-def deflog(options):
-    import logging as log
     levels = [log.WARNING, log.INFO, log.DEBUG]
     level = levels[min(len(levels)-1, options.verbose)]
     # if argparse -v is not passed log.warning is stderr by default
     # -v is log.info and -vv is log.debug
     log.basicConfig(level=level, format="%(asctime)s %(levelname)s %(message)s")
-    return log
+    return options, log
 
 
 def splunkgetsessionkey(options, auth_url):
     import requests
+    import sys
     try:
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     except:
         pass
-    import sys
     log.info("Trying {0} to authenticate to Splunk API".format(auth_url))
     try:
         r = requests.post(auth_url,
@@ -81,11 +78,11 @@ def splunkgetsessionkey(options, auth_url):
 
 def splunkcreatesearch(search_url, search_query, sessionkey):
     import requests
+    import sys
     try:
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     except:
         pass
-    import sys
 
     # Create search job
     log.info("Trying {0} to create Splunk search in API".format(search_url))
@@ -116,12 +113,12 @@ def splunkcreatesearch(search_url, search_query, sessionkey):
 
 def splunkcheckjobloop(status_url, sessionkey):
     import requests
+    import time
+    import sys
     try:
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     except:
         pass
-    import time
-    import sys
     # Set variables and run while loop that checks job status
     isdone = ''
     isfailed = ''
@@ -155,11 +152,11 @@ def splunkcheckjobloop(status_url, sessionkey):
 
 def splunkretrieveresults(results_url, sessionkey):
     import requests
+    import sys
     try:
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     except:
         pass
-    import sys
     # Retrieve search results
     log.info("Trying {0} for search results via Splunk API".format(results_url))
     try:
@@ -181,9 +178,7 @@ def splunkretrieveresults(results_url, sessionkey):
 if __name__ == '__main__':
     import sys
     import json
-    import logging as log
-    options = argparse()
-    log = deflog(options)
+    options, log = argslog()
     log.info("Starting Splunk API search to {0}:{1} with user {2}"
              .format(options.host, options.port, options.user))
 
@@ -236,7 +231,7 @@ if __name__ == '__main__':
 
     if numberofresults > options.threshold:
         log.info("Got {0} results".format(numberofresults))
-        print("CRITICAL - {0}, error count is {1}|resultsfound={1};;;0"
+        print("{0}, count is {1}|resultsfound={1};;;0"
               .format(options.errormsg, numberofresults))
         sys.exit(2)
     else:
